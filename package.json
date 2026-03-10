@@ -1,0 +1,6 @@
+{
+  "name": "zerodha-journal",
+  "version": "1.0.0",
+  "description": "Zerodha Options Trading Journal",
+  "main": "server.js"
+}
