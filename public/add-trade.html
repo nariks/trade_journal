@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add Trade — Zerodha Journal</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0d1117; color: #e2e8f0; font-family: Inter, sans-serif; }
+
+    nav { background: #161b22; border-bottom: 1px solid #21262d; padding: 0 24px; display: flex; align-items: center; }
+    .logo { background: linear-gradient(135deg,#f97316,#ef4444); border-radius: 6px; padding: 4px 12px; font-weight: 800; font-size: 14px; margin-right: 24px; color: #fff; text-decoration: none; }
+    nav a { padding: 14px 18px; font-size: 13px; font-weight: 600; color: #8b949e; text-decoration: none; border-bottom: 2px solid transparent; display: inline-block; }
+    nav a:hover { color: #e2e8f0; }
+    nav a.active { color: #f97316; border-bottom-color: #f97316; }
+
+    .content { padding: 28px 24px; max-width: 860px; }
+    h2 { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+
+    .card { background: #161b22; border: 1px solid #21262d; border-radius: 10px; padding: 24px; margin-bottom: 20px; }
+
+    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 14px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 14px; }
+
+    label { display: block; font-size: 11px; color: #8b949e; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+    input, select { width: 100%; background: #0d1117; border: 1px solid #21262d; border-radius: 6px; color: #e2e8f0; padding: 8px 10px; font-size: 13px; outline: none; }
+    input:focus, select:focus { border-color: #f97316; }
+
+    .btn { background: linear-gradient(135deg,#f97316,#ef4444); color: #fff; border: none; border-radius: 8px; padding: 10px 28px; font-weight: 700; font-size: 14px; cursor: pointer; margin-right: 10px; }
+    .btn-clear { background: #21262d; color: #8b949e; border: 1px solid #21262d; border-radius: 8px; padding: 10px 20px; font-weight: 600; font-size: 14px; cursor: pointer; }
+
+    /* Summary box */
+    .summary { background: #0d1117; border: 1px solid #21262d; border-radius: 8px; padding: 20px; font-family: 'Courier New', monospace; font-size: 13px; display: none; }
+    .summary.show { display: block; }
+    .summary-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+    .summary-row span:first-child { color: #8b949e; }
+    .summary-row span:last-child { min-width: 90px; text-align: right; }
+    .summary-divider { border: none; border-top: 1px solid #21262d; margin: 10px 0; }
+    .summary-net { display: flex; justify-content: space-between; font-weight: 700; font-size: 15px; }
+    .positive { color: #4ade80; }
+    .negative { color: #f87171; }
+
+    .msg { margin-top: 12px; font-size: 13px; font-weight: 600; display: none; }
+    .msg.show { display: block; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="/">Z</a>
+  <a href="/">Dashboard</a>
+  <a href="/add-trade.html" class="active">Add Trade</a>
+  <a href="#">Trade Log</a>
+  <a href="#">Daily Summary</a>
+  <a href="#">Equity Curve</a>
+</nav>
+
+<div class="content">
+  <h2>Add Trade</h2>
+  <div class="card">
+    <div class="grid">
+      <div>
+        <label>Date</label>
+        <input type="date" id="date">
+      </div>
+      <div>
+        <label>Symbol</label>
+        <select id="symbol" onchange="setLotSize()">
+          <option>NIFTY</option>
+          <option>BANKNIFTY</option>
+          <option>FINNIFTY</option>
+          <option>MIDCPNIFTY</option>
+          <option>SENSEX</option>
+        </select>
+      </div>
+      <div>
+        <label>Expiry</label>
+        <input type="date" id="expiry">
+      </div>
+      <div>
+        <label>Strike</label>
+        <input type="number" id="strike" placeholder="e.g. 24850">
+      </div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <label>Option Type</label>
+        <select id="optionType">
+          <option>CE</option>
+          <option>PE</option>
+        </select>
+      </div>
+      <div>
+        <label>Trade Type</label>
+        <select id="tradeType">
+          <option>BUY</option>
+          <option>SELL</option>
+        </select>
+      </div>
+      <div>
+        <label>Lots</label>
+        <input type="number" id="lots" value="1" min="1">
+      </div>
+      <div>
+        <label>Lot Size</label>
+        <input type="number" id="lotSize" value="75">
+      </div>
+    </div>
+
+    <div class="grid">
+      <div>
+        <label>Entry Price ₹</label>
+        <input type="number" id="entryPrice" step="0.05" placeholder="0.00">
+      </div>
+      <div>
+        <label>Exit Price ₹</label>
+        <input type="number" id="exitPrice" step="0.05" placeholder="0.00">
+      </div>
+      <div style="grid-column: span 2;">
+        <label>Notes (optional)</label>
+        <input type="text" id="notes" placeholder="Entry reason, observations...">
+      </div>
+    </div>
+
+    <!-- Trade Summary -->
+    <div class="summary" id="summary">
+      <div class="summary-row"><span>PROFIT / LOSS</span><span id="s-gross"></span></div>
+      <div class="summary-row"><span>Brokerage</span><span id="s-brok" class="negative"></span></div>
+      <div class="summary-row"><span>Exchange transaction charges</span><span id="s-exch" class="negative"></span></div>
+      <div class="summary-row"><span>CGST (@9% of Brok, SEBI, Trans &amp; Clearing Charges)</span><span id="s-cgst" class="negative"></span></div>
+      <div class="summary-row"><span>SGST (@9% of Brok, SEBI, Trans &amp; Clearing Charges)</span><span id="s-sgst" class="negative"></span></div>
+      <div class="summary-row"><span>Securities transaction tax</span><span id="s-stt" class="negative"></span></div>
+      <div class="summary-row"><span>SEBI turnover fees</span><span id="s-sebi" class="negative"></span></div>
+      <div class="summary-row"><span>Stamp duty</span><span id="s-stamp" class="negative"></span></div>
+      <hr class="summary-divider">
+      <div class="summary-net"><span>Net amount</span><span id="s-net"></span></div>
+    </div>
+
+    <div style="margin-top: 16px;">
+      <button class="btn" onclick="saveTrade()">Save Trade</button>
+      <button class="btn-clear" onclick="clearForm()">Clear</button>
+    </div>
+    <div class="msg" id="msg"></div>
+  </div>
+</div>
+
+<script>
+  const LOT_SIZES = { NIFTY: 75, BANKNIFTY: 30, FINNIFTY: 65, MIDCPNIFTY: 120, SENSEX: 20 };
+
+  // Set today's date on load
+  document.getElementById('date').value = new Date().toISOString().split('T')[0];
+
+  function setLotSize() {
+    const sym = document.getElementById('symbol').value;
+    document.getElementById('lotSize').value = LOT_SIZES[sym] || 75;
+  }
+
+  // Live preview as user types
+  ['entryPrice','exitPrice','lots','lotSize','tradeType'].forEach(id => {
+    document.getElementById(id).addEventListener('input', previewCharges);
+  });
+
+  function previewCharges() {
+    const entry  = parseFloat(document.getElementById('entryPrice').value);
+    const exit   = parseFloat(document.getElementById('exitPrice').value);
+    const lots   = parseInt(document.getElementById('lots').value);
+    const lotSz  = parseInt(document.getElementById('lotSize').value);
+    const ttype  = document.getElementById('tradeType').value;
+
+    if (!entry || !exit || !lots || !lotSz) {
+      document.getElementById('summary').classList.remove('show');
+      return;
+    }
+
+    const c = calculate(lots, lotSz, entry, exit, ttype);
+    renderSummary(c);
+  }
+
+  function calculate(lots, lotSize, entryPrice, exitPrice, tradeType) {
+    const qty       = lots * lotSize;
+    const buyTurn   = qty * entryPrice;
+    const sellTurn  = qty * exitPrice;
+    const totalTurn = buyTurn + sellTurn;
+    const dir       = tradeType === 'BUY' ? 1 : -1;
+
+    const grossPnL    = parseFloat((dir * (exitPrice - entryPrice) * qty).toFixed(2));
+    const brokerage   = parseFloat((Math.min(0.005 * buyTurn, 50) + Math.min(0.005 * sellTurn, 50)).toFixed(2));
+    const exchCharges = parseFloat((0.0003553 * totalTurn).toFixed(2));
+    const stt         = Math.round(0.001 * sellTurn);
+    const sebi        = parseFloat(((10 / 10000000) * totalTurn).toFixed(2));
+    const stampDuty   = Math.round(0.00003 * buyTurn);
+    const gstBase     = brokerage + exchCharges + sebi;
+    const cgst        = parseFloat((0.09 * gstBase).toFixed(2));
+    const sgst        = parseFloat((0.09 * gstBase).toFixed(2));
+    const totalChg    = parseFloat((brokerage + exchCharges + stt + sebi + stampDuty + cgst + sgst).toFixed(2));
+    const netPnL      = parseFloat((grossPnL - totalChg).toFixed(2));
+
+    return { grossPnL, brokerage, exchCharges, cgst, sgst, stt, sebi, stampDuty, totalChg, netPnL };
+  }
+
+  function fmt(n) { return (n >= 0 ? '' : '-') + Math.abs(n).toFixed(2); }
+
+  function renderSummary(c) {
+    const summary = document.getElementById('summary');
+    summary.classList.add('show');
+
+    const gross = document.getElementById('s-gross');
+    gross.textContent = fmt(c.grossPnL);
+    gross.className = c.grossPnL >= 0 ? 'positive' : 'negative';
+
+    document.getElementById('s-brok').textContent  = '-' + c.brokerage.toFixed(2);
+    document.getElementById('s-exch').textContent  = '-' + c.exchCharges.toFixed(2);
+    document.getElementById('s-cgst').textContent  = '-' + c.cgst.toFixed(2);
+    document.getElementById('s-sgst').textContent  = '-' + c.sgst.toFixed(2);
+    document.getElementById('s-stt').textContent   = '-' + c.stt.toFixed(2);
+    document.getElementById('s-sebi').textContent  = '-' + c.sebi.toFixed(2);
+    document.getElementById('s-stamp').textContent = '-' + c.stampDuty.toFixed(2);
+
+    const net = document.getElementById('s-net');
+    net.textContent = fmt(c.netPnL);
+    net.className = c.netPnL >= 0 ? 'positive' : 'negative';
+  }
+
+  async function saveTrade() {
+    const strike = document.getElementById('strike').value;
+    const entry  = document.getElementById('entryPrice').value;
+    const exit   = document.getElementById('exitPrice').value;
+
+    if (!strike || !entry || !exit) {
+      showMsg('Please fill in Strike, Entry Price and Exit Price.', false);
+      return;
+    }
+
+    const trade = {
+      date       : document.getElementById('date').value,
+      expiry     : document.getElementById('expiry').value,
+      symbol     : document.getElementById('symbol').value,
+      strike     : parseFloat(strike),
+      optionType : document.getElementById('optionType').value,
+      tradeType  : document.getElementById('tradeType').value,
+      lots       : parseInt(document.getElementById('lots').value),
+      lotSize    : parseInt(document.getElementById('lotSize').value),
+      entryPrice : parseFloat(entry),
+      exitPrice  : parseFloat(exit),
+      notes      : document.getElementById('notes').value,
+    };
+
+    try {
+      const res  = await fetch('/api/trade', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(trade) });
+      const data = await res.json();
+      if (data.success) {
+        showMsg('✅ Trade saved successfully!', true);
+      } else {
+        showMsg('❌ Error: ' + data.error, false);
+      }
+    } catch (e) {
+      showMsg('❌ Could not connect to server.', false);
+    }
+  }
+
+  function showMsg(text, ok) {
+    const el = document.getElementById('msg');
+    el.textContent = text;
+    el.style.color = ok ? '#4ade80' : '#f87171';
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 4000);
+  }
+
+  function clearForm() {
+    document.getElementById('strike').value = '';
+    document.getElementById('entryPrice').value = '';
+    document.getElementById('exitPrice').value = '';
+    document.getElementById('notes').value = '';
+    document.getElementById('lots').value = 1;
+    document.getElementById('summary').classList.remove('show');
+  }
+</script>
+</body>
+</html>
