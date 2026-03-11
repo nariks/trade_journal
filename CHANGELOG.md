@@ -4,7 +4,36 @@ All notable changes to Zerodha Options Trading Journal.
 
 ---
 
-## Phase 3.1 — Refactor & Trade Log Rebuild
+## Phase 3.2 — P&L Summary Page
+### Added
+- `public/summary.html` — P&L Summary page
+- `public/js/summary.js` — Summary page logic
+- Tax year grid — year cards showing FY and net P&L, green/red
+- 4 level drill down — Tax Year → Month → Day → Trades
+- Day detail in contract note style — monospaced, B/S plain text
+- PROFIT / LOSS line, Fees toggle with full breakdown, Net P&L line
+- Fees always start collapsed
+- Filter bar — date range, symbol, option type
+- Filter results show at day level with drill down
+- Clear filter restores year grid
+
+### Changed
+- Nav updated — Summary renamed to P&L Summary across all pages
+
+### Known Issues
+- Gap between month row and Total row — to be fixed in Phase 3.3
+- Page not centred on wide screens — to be fixed in Phase 3.3
+- Grid disappears when filter active — to be redesigned in Phase 3.3
+
+### Deferred to Phase 3.3
+- Date display format `10-Mar-2026` in Trade Log
+- Duplicate trade check on Add Trade
+- Nav injection via app.js
+- Year grid always visible, search results below grid
+
+---
+
+
 ### Added
 - `public/style.css` — shared styles across all pages
 - `public/js/app.js` — shared utility functions: `fmt()`, `showMsg()`, `calculate()`, `LOT_SIZES`, nav highlighting

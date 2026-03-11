@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>P&L Summary — Zerodha Journal</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .year-grid { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 32px; }
+
+    .year-card {
+      background: #161b22;
+      border: 1px solid #21262d;
+      border-radius: 10px;
+      padding: 20px 28px;
+      cursor: pointer;
+      min-width: 160px;
+      text-align: center;
+      transition: border-color 0.2s;
+    }
+    .year-card:hover { border-color: #f97316; }
+    .year-card.active { border-color: #f97316; background: #1c1a14; }
+    .year-card .year-label { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
+    .year-card .year-pnl   { font-size: 20px; font-weight: 800; }
+
+    /* Drill down */
+    .drill { margin-bottom: 4px; }
+
+    .drill-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .drill-header:hover { background: #1c2230; }
+
+    .drill-arrow { font-size: 11px; color: #8b949e; transition: transform 0.2s; display: inline-block; }
+    .drill-arrow.open { transform: rotate(90deg); }
+
+    .drill-body { display: none; padding-left: 20px; }
+    .drill-body.open { display: block; }
+
+    .month-header .drill-label { font-size: 14px; font-weight: 700; min-width: 140px; }
+    .day-header   .drill-label { font-size: 13px; font-weight: 600; min-width: 140px; color: #cbd5e1; }
+
+    .drill-stats { display: flex; gap: 24px; font-size: 13px; margin-left: auto; }
+    .drill-stats span { color: #8b949e; }
+    .drill-stats strong { margin-left: 4px; }
+
+    /* Day detail — contract note style */
+    .day-detail {
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 8px 0 8px 20px;
+    }
+
+    .day-detail-header {
+      display: grid;
+      grid-template-columns: 2fr 60px 80px 80px 80px 100px;
+      gap: 8px;
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #21262d;
+      margin-bottom: 10px;
+    }
+
+    .day-detail-row {
+      display: grid;
+      grid-template-columns: 2fr 60px 80px 80px 80px 100px;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .day-detail-row span:nth-child(2) { color: #8b949e; text-align: center; }
+    .day-detail-row span:nth-child(3) { color: #8b949e; text-align: right; }
+    .day-detail-row span:nth-child(4) { text-align: right; }
+    .day-detail-row span:nth-child(5) { text-align: right; }
+    .day-detail-row span:nth-child(6) { text-align: right; font-weight: 700; }
+    .day-detail-header span:nth-child(n+3) { text-align: right; }
+
+    .detail-divider { border: none; border-top: 1px solid #21262d; margin: 12px 0; }
+
+    .detail-pnl-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .detail-pnl-row span:first-child { color: #8b949e; }
+
+    .fees-toggle {
+      display: flex;
+      justify-content: space-between;
+      cursor: pointer;
+      margin-bottom: 8px;
+      user-select: none;
+    }
+    .fees-toggle-label { color: #f87171; font-weight: 600; }
+    .fees-toggle-label .drill-arrow { color: #f87171; font-size: 10px; margin-right: 6px; }
+    .fees-toggle-amount { color: #f87171; font-weight: 700; }
+
+    .fees-breakdown {
+      display: none;
+      background: #161b22;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+    .fees-breakdown.open { display: block; }
+    .fee-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+    .fee-row span:first-child { color: #8b949e; }
+    .fee-row span:last-child  { color: #f87171; min-width: 70px; text-align: right; }
+
+    .detail-net-row {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .note-text { font-size: 11px; color: #64748b; font-style: italic; }
+
+    /* Filter bar */
+    .filter-bar {
+      background: #161b22;
+      border: 1px solid #21262d;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+    .filter-bar label { font-size: 11px; color: #8b949e; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: block; }
+    .filter-bar input, .filter-bar select { background: #0d1117; border: 1px solid #21262d; border-radius: 6px; color: #e2e8f0; padding: 7px 10px; font-size: 13px; outline: none; width: auto; }
+    .filter-bar input:focus, .filter-bar select:focus { border-color: #f97316; }
+    .btn-filter  { background: #f97316; color: #fff; border: none; border-radius: 6px; padding: 8px 18px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-clear-f { background: #21262d; color: #8b949e; border: 1px solid #21262d; border-radius: 6px; padding: 8px 14px; font-size: 13px; cursor: pointer; }
+
+    /* Filter results */
+    .filter-results { margin-top: 8px; }
+    .filter-day { background: #161b22; border: 1px solid #21262d; border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+    .filter-day-header { padding: 12px 16px; display: flex; gap: 16px; align-items: center; cursor: pointer; }
+    .filter-day-header:hover { background: #1c2230; }
+    .filter-day-header .fdate { font-weight: 700; font-size: 14px; min-width: 120px; }
+
+    .empty { text-align: center; padding: 60px; color: #475569; }
+    .empty .empty-icon { font-size: 36px; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="/">Z</a>
+  <a href="/">Dashboard</a>
+  <a href="/add-trade.html">Add Trade</a>
+  <a href="/trade-log.html">Trade Log</a>
+  <a href="/summary.html">P&L Summary</a>
+  <a href="/equity.html">Equity Curve</a>
+</nav>
+
+<div class="content">
+  <h2>P&L Summary</h2>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <div>
+      <label>From</label>
+      <input type="date" id="filterFrom">
+    </div>
+    <div>
+      <label>To</label>
+      <input type="date" id="filterTo">
+    </div>
+    <div>
+      <label>Symbol</label>
+      <select id="filterSymbol">
+        <option value="">All</option>
+        <option>NIFTY</option>
+        <option>BANKNIFTY</option>
+        <option>FINNIFTY</option>
+        <option>MIDCPNIFTY</option>
+        <option>SENSEX</option>
+      </select>
+    </div>
+    <div>
+      <label>Type</label>
+      <select id="filterType">
+        <option value="">All</option>
+        <option>CE</option>
+        <option>PE</option>
+      </select>
+    </div>
+    <button class="btn-filter"  onclick="applyFilter()">Search</button>
+    <button class="btn-clear-f" onclick="clearFilter()">Clear</button>
+  </div>
+
+  <!-- Year grid (shown when no filter active) -->
+  <div id="yearSection">
+    <div class="year-grid" id="yearGrid"></div>
+    <div id="drillSection"></div>
+  </div>
+
+  <!-- Filter results (shown when filter active) -->
+  <div id="filterSection" style="display:none;">
+    <div id="filterResults"></div>
+  </div>
+
+</div>
+
+<script src="/js/app.js"></script>
+<script src="/js/summary.js"></script>
+</body>
+</html>
