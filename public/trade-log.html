@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Trade Log — Zerodha Journal</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="/">Z</a>
+  <a href="/">Dashboard</a>
+  <a href="/add-trade.html">Add Trade</a>
+  <a href="/trade-log.html">Trade Log</a>
+  <a href="/summary.html">Summary</a>
+  <a href="/equity.html">Equity Curve</a>
+</nav>
+
+<div class="content">
+  <div class="toolbar">
+    <h2>Trade Log</h2>
+    <div class="filters">
+      <select id="filterSymbol" onchange="applyFilters()">
+        <option value="">All Symbols</option>
+        <option>NIFTY</option>
+        <option>BANKNIFTY</option>
+        <option>FINNIFTY</option>
+        <option>MIDCPNIFTY</option>
+        <option>SENSEX</option>
+      </select>
+      <input type="date" id="filterFrom" onchange="applyFilters()" title="From date">
+      <input type="date" id="filterTo"   onchange="applyFilters()" title="To date">
+    </div>
+  </div>
+
+  <div class="msg" id="msg"></div>
+
+  <div id="tradeGroups"></div>
+
+  <div class="empty" id="emptyMsg" style="display:none;">
+    <div class="empty-icon">📋</div>
+    <div>No trades found.</div>
+  </div>
+
+  <div class="pagination" id="pagination"></div>
+</div>
+
+<script src="/js/app.js"></script>
+<script src="/js/trade-log.js"></script>
+</body>
+</html>

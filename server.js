@@ -57,12 +57,22 @@ function parseBody(req) {
 }
 
 // ── Route handlers ────────────────────────────────────────────────────────────
+function getTrades(req, res) {
+  try {
+    const trades = readTrades();
+    sendJSON(res, 200, { success: true, trades });
+  } catch(e) {
+    sendJSON(res, 400, { error: e.message });
+  }
+}
+
 async function addTrade(req, res) {
   try {
     const trade   = await parseBody(req);
     const charges = calcCharges(trade);
     const trades  = readTrades();
-    const record  = { id: Date.now(), ...trade, ...charges, createdAt: new Date().toISOString() };
+    const tradeNo = trades.length + 1;
+    const record  = { id: Date.now(), tradeNo, ...trade, ...charges, createdAt: new Date().toISOString() };
     trades.push(record);
     writeTrades(trades);
     sendJSON(res, 200, { success: true, trade: record });
@@ -104,15 +114,15 @@ const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // API routes
   const tradeMatch = req.url.match(/^\/api\/trade\/(\d+)$/);
 
-  if (req.method === 'POST'   && req.url === '/api/trade')       return addTrade(req, res);
-  if (req.method === 'PUT'    && tradeMatch)                      return editTrade(req, res, parseInt(tradeMatch[1]));
-  if (req.method === 'DELETE' && tradeMatch)                      return deleteTrade(req, res, parseInt(tradeMatch[1]));
+  if (req.method === 'GET'    && req.url === '/api/trades')  return getTrades(req, res);
+  if (req.method === 'POST'   && req.url === '/api/trade')   return addTrade(req, res);
+  if (req.method === 'PUT'    && tradeMatch)                 return editTrade(req, res, parseInt(tradeMatch[1]));
+  if (req.method === 'DELETE' && tradeMatch)                 return deleteTrade(req, res, parseInt(tradeMatch[1]));
 
-  // Serve static files
-  const filePath    = path.join(PUBLIC_DIR, req.url === '/' ? 'index.html' : req.url);
+  const cleanUrl    = req.url.split('?')[0];
+  const filePath    = path.join(PUBLIC_DIR, cleanUrl === '/' ? 'index.html' : cleanUrl);
   const contentType = MIME[path.extname(filePath)] || 'text/plain';
 
   fs.readFile(filePath, (err, data) => {
